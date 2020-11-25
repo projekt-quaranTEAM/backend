@@ -1,6 +1,7 @@
 package pl.programowaniezespolowe.planner.proposition;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "proposition", schema = "public")
@@ -25,15 +26,28 @@ public class Proposition {
     @Column(name = "category")
     private String category;
 
+    @Column(name = "startdate")
+    private Date startdate;
+
     public Proposition() {}
 
-    public Proposition(int id, String name, String link, int userid, int activityid, String category) {
+    public Proposition(String name, String link, int userid, int activityid, String category, Date startdate) {
+        this.name = name;
+        this.link = link;
+        this.userid = userid;
+        this.activityid = activityid;
+        this.category = category;
+        this.startdate = startdate;
+    }
+
+    public Proposition(int id, String name, String link, int userid, int activityid, String category, Date startdate) {
         this.id = id;
         this.name = name;
         this.link = link;
         this.userid = userid;
         this.activityid = activityid;
         this.category = category;
+        this.startdate = startdate;
     }
 
     public int getId() {
@@ -82,5 +96,13 @@ public class Proposition {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public Date getStartdate() {
+        return startdate;
+    }
+
+    public void setStartdate(Date startdate) {
+        this.startdate = startdate;
     }
 }

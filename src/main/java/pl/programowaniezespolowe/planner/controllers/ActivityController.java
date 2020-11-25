@@ -4,6 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import pl.programowaniezespolowe.planner.activity.Activity;
 import pl.programowaniezespolowe.planner.activity.ActivityRepository;
+import pl.programowaniezespolowe.planner.proposition.Proposition;
+import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
 import pl.programowaniezespolowe.planner.user.User;
 
 import java.util.*;
@@ -73,18 +75,7 @@ public class ActivityController {
         return activityRepository.findAll();
     }
 
-    //Search For more propositions
-    public void getPropositionsFromWeb() {
 
-        //For Events
-        //https://www.eventbrite.com/
-
-        //For culinary
-
-
-        //For mo
-
-    }
 
 
     //Algorithm
@@ -104,6 +95,8 @@ public class ActivityController {
         activities.add(a);
         return activities;
     }
+
+
 
 
 }
