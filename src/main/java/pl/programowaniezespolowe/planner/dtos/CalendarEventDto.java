@@ -1,14 +1,14 @@
 package pl.programowaniezespolowe.planner.dtos;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class CalendarEventDto {
 
     private int id;

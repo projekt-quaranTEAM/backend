@@ -29,7 +29,7 @@ public class PropositionController {
         ArrayList<PropositionDto> mapedEvents = new ArrayList<>();
         for (Proposition proposition : propositions) {
             if(proposition.getStartdate() != null)
-            mapedEvents.add(new PropositionDto(new CalendarEventDto(proposition.getName(),Instant.ofEpochMilli(proposition.getStartdate().getTime()),Instant.ofEpochMilli(proposition.getStartdate().getTime())),proposition.getLink(),proposition.getCategory(),proposition.getId(),proposition.getUserid()));
+            mapedEvents.add(new PropositionDto(new CalendarEventDto(proposition.getId(),proposition.getName(),Instant.ofEpochMilli(proposition.getStartdate().getTime()),Instant.ofEpochMilli(proposition.getStartdate().getTime())),proposition.getLink(),proposition.getCategory(),proposition.getId(),proposition.getUserid()));
         }
 
         return mapedEvents;

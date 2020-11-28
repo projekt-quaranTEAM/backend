@@ -54,6 +54,7 @@ public class EventController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @CrossOrigin
     @PutMapping("/event/{eventId}")
     public ResponseEntity<?> updateEvent(@RequestBody EventDto event, @PathVariable Integer eventId) {
 
@@ -62,8 +63,8 @@ public class EventController {
         if(updateEvent.isPresent()) {
 
             updateEvent.get().setStart(Date.from(event.getCalendarEvent().getStart()));
-            updateEvent.get().setEnd(Date.from(event.getCalendarEvent().getStart()));
-            updateEvent.get().setTitle(String.valueOf(event.getCalendarEvent().getEnd()));
+            updateEvent.get().setEnd(Date.from(event.getCalendarEvent().getEnd()));
+            updateEvent.get().setTitle(String.valueOf(event.getCalendarEvent().getTitle()));
             updateEvent.get().setUserID(event.getUserID());
             eventRepository.save(updateEvent.get());
 
