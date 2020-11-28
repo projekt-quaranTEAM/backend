@@ -30,7 +30,7 @@ public class EventController {
         ArrayList<EventDto> mapedEvents = new ArrayList<>();
         for (Event event : events) {
             if(event.getStart() != null)
-            mapedEvents.add(new EventDto(new CalendarEventDto(event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId()));
+            mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId()));
         }
 
         return mapedEvents;
@@ -54,7 +54,7 @@ public class EventController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PutMapping("/event/{id}")
+    @PutMapping("/event/{eventId}")
     public ResponseEntity<?> updateEvent(@RequestBody EventDto event, @PathVariable Integer eventId) {
 
         Optional<Event> updateEvent = eventRepository.findById(eventId);

@@ -11,6 +11,7 @@ import java.time.Instant;
 @AllArgsConstructor
 public class CalendarEventDto {
 
+    private int id;
     private String title;
     private Instant start;
     private Instant end;
