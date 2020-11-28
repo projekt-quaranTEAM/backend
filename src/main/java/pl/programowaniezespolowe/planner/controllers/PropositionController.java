@@ -7,10 +7,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import pl.programowaniezespolowe.planner.activity.ActivityRepository;
+import pl.programowaniezespolowe.planner.dtos.CalendarEventDto;
+import pl.programowaniezespolowe.planner.dtos.PropositionDto;
 import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,9 +24,18 @@ public class PropositionController {
     PropositionRepository propositionRepository;
 
     @GetMapping("/proposition")
-    public List<Proposition> getPropositions() {
-        return propositionRepository.findAll();
+    public List<PropositionDto> getPropositions() {
+        List<Proposition> propositions = propositionRepository.findAll();
+        ArrayList<PropositionDto> mapedEvents = new ArrayList<>();
+        for (Proposition proposition : propositions) {
+            if(proposition.getStartdate() != null)
+            mapedEvents.add(new PropositionDto(new CalendarEventDto(proposition.getName(),Instant.ofEpochMilli(proposition.getStartdate().getTime()),Instant.ofEpochMilli(proposition.getStartdate().getTime())),proposition.getLink(),proposition.getCategory(),proposition.getId(),proposition.getUserid()));
+        }
+
+        return mapedEvents;
     }
+
+
 
     @GetMapping("/proposition/{name}")
     public List<Proposition> getPropositionsByCategory(@PathVariable String name) {
