@@ -2,10 +2,7 @@ package pl.programowaniezespolowe.planner.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import pl.programowaniezespolowe.planner.activity.ActivityRepository;
 import pl.programowaniezespolowe.planner.dtos.CalendarEventDto;
 import pl.programowaniezespolowe.planner.dtos.PropositionDto;
@@ -23,6 +20,7 @@ public class PropositionController {
     @Autowired
     PropositionRepository propositionRepository;
 
+    @CrossOrigin
     @GetMapping("/proposition")
     public List<PropositionDto> getPropositions() {
         List<Proposition> propositions = propositionRepository.findAll();
@@ -36,7 +34,7 @@ public class PropositionController {
     }
 
 
-
+    @CrossOrigin
     @GetMapping("/proposition/{name}")
     public List<Proposition> getPropositionsByCategory(@PathVariable String name) {
         List<Proposition> li = propositionRepository.findAll();
@@ -47,6 +45,7 @@ public class PropositionController {
         return pros;
     }
 
+    @CrossOrigin
     @GetMapping(path = "/proposition/update/{name}")
     public List<Proposition> getPropositionsFromWeb(@PathVariable String name) {
 
