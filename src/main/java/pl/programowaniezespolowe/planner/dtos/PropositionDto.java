@@ -16,4 +16,7 @@ public class PropositionDto {
     private Integer userId;
 
 
+    public Integer getUserID() {
+        return this.userId;
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.programowaniezespolowe.planner.dtos.CalendarEventDto;
 import pl.programowaniezespolowe.planner.dtos.EventDto;
+import pl.programowaniezespolowe.planner.dtos.PropositionDto;
 import pl.programowaniezespolowe.planner.event.Event;
 import pl.programowaniezespolowe.planner.event.EventRepository;
 
@@ -42,6 +43,16 @@ public class EventController {
     public Optional<Event> getEvent(@PathVariable String id) {
         int eventId = Integer.parseInt(id);
         return eventRepository.findById(eventId);
+    }
+
+    @CrossOrigin
+    @PostMapping("/event/proposition")
+    public ResponseEntity<?> saveProposition(@RequestBody PropositionDto event) {
+        System.out.println(event);
+
+        eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @CrossOrigin
