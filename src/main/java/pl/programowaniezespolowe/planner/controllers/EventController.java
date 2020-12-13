@@ -4,11 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.programowaniezespolowe.planner.activity.Activity;
+import pl.programowaniezespolowe.planner.activity.ActivityRepository;
 import pl.programowaniezespolowe.planner.dtos.CalendarEventDto;
 import pl.programowaniezespolowe.planner.dtos.EventDto;
 import pl.programowaniezespolowe.planner.dtos.PropositionDto;
 import pl.programowaniezespolowe.planner.event.Event;
 import pl.programowaniezespolowe.planner.event.EventRepository;
+import pl.programowaniezespolowe.planner.proposition.Proposition;
+import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 
 
 import java.time.Instant;
@@ -23,6 +27,9 @@ public class EventController {
     @Autowired
     EventRepository eventRepository;
 
+    @Autowired
+    ActivityRepository activityRepository;
+
 
     @CrossOrigin
     @GetMapping(path = "/events")
@@ -31,7 +38,7 @@ public class EventController {
         ArrayList<EventDto> mapedEvents = new ArrayList<>();
         for (Event event : events) {
             if(event.getStart() != null)
-            mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId()));
+            mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId(), "", ""));
         }
 
         return mapedEvents;
@@ -59,6 +66,19 @@ public class EventController {
     @PostMapping("/event")
     public ResponseEntity<?> createEvent(@RequestBody EventDto event) {
         System.out.println(event);
+        System.out.println(event.getCategory());
+
+        List<Activity> activities = activityRepository.findAll();
+
+        Activity updateActivity;
+
+        for(Activity a : activities) {
+            if(a.getName().toLowerCase().equals(event.getCategory())) {
+                updateActivity = a;
+                updateActivity.setAmount(updateActivity.getAmount()+1);
+                activityRepository.save(updateActivity);
+            }
+        }
 
         eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
 

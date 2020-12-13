@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import pl.programowaniezespolowe.planner.activity.Activity;
 import pl.programowaniezespolowe.planner.activity.ActivityRepository;
 import pl.programowaniezespolowe.planner.dtos.CalendarEventDto;
 import pl.programowaniezespolowe.planner.dtos.PropositionDto;
@@ -12,9 +13,10 @@ import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
 
+import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 public class PropositionController {
@@ -22,10 +24,13 @@ public class PropositionController {
     @Autowired
     PropositionRepository propositionRepository;
 
+    @Autowired
+    ActivityRepository activityRepository;
+
     @CrossOrigin
     @GetMapping("/proposition")
     public List<PropositionDto> getPropositions() {
-        List<Proposition> propositions = propositionRepository.findAll();
+        List<Proposition> propositions = getThreeCategoriesAlgorithm();
         ArrayList<PropositionDto> mapedEvents = new ArrayList<>();
         for (Proposition proposition : propositions) {
             if(proposition.getStartdate() != null)
@@ -33,6 +38,47 @@ public class PropositionController {
         }
 
         return mapedEvents;
+    }
+
+    //@CrossOrigin
+    //@GetMapping("/proposition2")
+    public List<Proposition> getThreeCategoriesAlgorithm() {
+        List<Proposition> li = propositionRepository.findAll();
+        List<Activity> ac = activityRepository.findAll();
+
+        List<Activity> sortedActivities = ac.stream()
+                .sorted(Comparator.comparing(Activity::getAmount).reversed())
+                .collect(Collectors.toList());
+
+        List<String> pros = new ArrayList<>();
+
+        String one = "sport";
+        String two = "games";
+        String three = "music";
+
+        String mostCommon = sortedActivities.get(0).getName();
+        sortedActivities.remove(0);
+        System.out.println(mostCommon);
+        List<Proposition> sortedByAlgorithm = new ArrayList<>();
+        for(Proposition p : li) {
+            if(p.getCategory().equals(one)) sortedByAlgorithm.add(p);
+        }
+        for(Proposition p : li) {
+            if(p.getCategory().equals(two)) sortedByAlgorithm.add(p);
+        }
+        for(Proposition p : li) {
+            if(p.getCategory().equals(three)) sortedByAlgorithm.add(p);
+        }
+        sortedByAlgorithm.add(new Proposition("SPECIAL FOR YOU", new Date()));
+
+        for(Proposition p : li) {
+            if(p.getCategory().equals(mostCommon.toLowerCase())) sortedByAlgorithm.add(p);
+        }
+        for(Proposition p : li) {
+            if(!p.getCategory().equals(mostCommon.toLowerCase())) sortedByAlgorithm.add(p);
+        }
+
+        return sortedByAlgorithm;
     }
 
 

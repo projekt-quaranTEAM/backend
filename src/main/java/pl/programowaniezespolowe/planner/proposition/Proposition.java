@@ -1,6 +1,7 @@
 package pl.programowaniezespolowe.planner.proposition;
 
 import javax.persistence.*;
+import javax.xml.crypto.Data;
 import java.util.Date;
 
 @Entity
@@ -30,6 +31,11 @@ public class Proposition {
     private Date startdate;
 
     public Proposition() {}
+
+    public Proposition(String category, Date startdate) {
+        this.category = category;
+        this.startdate = startdate;
+    }
 
     public Proposition(String name, String link, int userid, int activityid, String category, Date startdate) {
         this.name = name;

@@ -11,5 +11,7 @@ public class EventDto {
     private CalendarEventDto calendarEvent;
     private Integer userID;
     private Integer eventID;
+    private String link;
+    private String category;
     //id propozycji - opcjonalne - jeśli event został dodany przez propozycję (do pobrania szczegółów potrzebne)
 }
