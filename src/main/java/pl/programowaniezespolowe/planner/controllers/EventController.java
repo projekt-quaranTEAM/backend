@@ -38,7 +38,7 @@ public class EventController {
         ArrayList<EventDto> mapedEvents = new ArrayList<>();
         for (Event event : events) {
             if(event.getStart() != null)
-            mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId(), "", ""));
+            mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId(), event.getLink(), ""));
         }
 
         return mapedEvents;
@@ -80,7 +80,7 @@ public class EventController {
             }
         }
 
-        eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
+        eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd()), event.getLink()));
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

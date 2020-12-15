@@ -29,6 +29,9 @@ public class Event {
 
     @Column(name = "enddate")
     private Date end;
+
+    @Column(name = "link")
+    private String link;
 //
 //    @Column(name = "color")
 //    private String color;
@@ -61,6 +64,14 @@ public class Event {
         this.start = from;
         this.end = from1;
         this.id = Id;
+    }
+
+    public Event(Integer userID, String title, Date from, Date from1, String link) {
+        this.userID = userID;
+        this.title = title;
+        this.start = from;
+        this.end = from1;
+        this.link = link;
     }
 
 //    @OneToMany
