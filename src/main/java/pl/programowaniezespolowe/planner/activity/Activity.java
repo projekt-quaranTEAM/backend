@@ -81,4 +81,9 @@ public class Activity {
     public void setPropositions(List<Proposition> propositions) {
         this.propositions = propositions;
     }
+
+    @Override
+    public String toString() {
+        return this.getId() + " | " + this.getAmount() + " | " + this.getName();
+    }
 }

@@ -9,6 +9,8 @@ import pl.programowaniezespolowe.planner.activity.Activity;
 import pl.programowaniezespolowe.planner.activity.ActivityRepository;
 import pl.programowaniezespolowe.planner.dtos.CalendarEventDto;
 import pl.programowaniezespolowe.planner.dtos.PropositionDto;
+import pl.programowaniezespolowe.planner.event.Event;
+import pl.programowaniezespolowe.planner.event.EventRepository;
 import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
@@ -17,6 +19,8 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static pl.programowaniezespolowe.planner.controllers.EventController.getLastActivities;
 
 @RestController
 public class PropositionController {
@@ -27,10 +31,14 @@ public class PropositionController {
     @Autowired
     ActivityRepository activityRepository;
 
+    @Autowired
+    EventRepository eventRepository;
+
+
     @CrossOrigin
     @GetMapping("/proposition")
     public List<PropositionDto> getPropositions() {
-        List<Proposition> propositions = getThreeCategoriesAlgorithm();
+        List<Proposition> propositions = getThreeCategoriesAlgorithm(1);
         ArrayList<PropositionDto> mapedEvents = new ArrayList<>();
         for (Proposition proposition : propositions) {
             if(proposition.getStartdate() != null)
@@ -40,15 +48,45 @@ public class PropositionController {
         return mapedEvents;
     }
 
-    //@CrossOrigin
-    //@GetMapping("/proposition2")
-    public List<Proposition> getThreeCategoriesAlgorithm() {
+    //Algorithm
+    public List<Proposition> getThreeCategoriesAlgorithm(int id) {
         List<Proposition> li = propositionRepository.findAll();
         List<Activity> ac = activityRepository.findAll();
+        List<Event> ev = eventRepository.findAll();
 
         List<Activity> sortedActivities = ac.stream()
                 .sorted(Comparator.comparing(Activity::getAmount).reversed())
                 .collect(Collectors.toList());
+
+        Map<String, Integer> weights = new HashMap<>();
+
+        for(Activity a : sortedActivities)
+        {
+            weights.put(a.getName(), a.getAmount());
+        }
+        //System.out.println(weights.toString());
+        for(Event e : ev) {
+            if(e.getLink() != null) {
+                for(Proposition p : li) {
+                    if(p.getName().equals(e.getTitle())) {
+                        for(Map.Entry<String, Integer> en : weights.entrySet()) {
+                            if(en.getKey().toLowerCase().equals(p.getCategory())) {
+                                en.setValue(en.getValue() + 1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //System.out.println(weights.toString());
+        Map<Integer, Map<String, Date>> last = getLastActivities();
+        //System.out.println("Mapka:");
+        for(Map.Entry<Integer, Map<String, Date>> en : last.entrySet()) {
+            //System.out.println(en.getKey());
+            for(Map.Entry<String, Date> en1 : en.getValue().entrySet()) {
+                //System.out.println(en1.getKey() + " } " + en1.getValue().getTime());
+            }
+        }
 
         List<String> pros = new ArrayList<>();
 
@@ -56,9 +94,58 @@ public class PropositionController {
         String two = "games";
         String three = "music";
 
+        int oneInitialC = 3;
+        int twoInitialC = 2;
+        int threeInitialC = 1;
+
+        int oneLastC = 1;
+        int twoLastC = 2;
+        int threeLastC = 3;
+
+        //Calculate weights sum
+        //System.out.println("Calculating");
+        for(Activity a : sortedActivities) {
+            for(Map.Entry<String, Integer> en : weights.entrySet()) {
+                if(en.getKey().equals(a.getName())) a.setAmount(en.getValue());
+            }
+        }
+        //Calculate weights divide initial survey
+        for(Activity a : sortedActivities) {
+            if(a.getName().toLowerCase().equals(one)) a.setAmount(a.getAmount() / oneInitialC);
+            if(a.getName().toLowerCase().equals(two)) a.setAmount(a.getAmount() / twoInitialC);
+            if(a.getName().toLowerCase().equals(three)) a.setAmount(a.getAmount() / threeInitialC);
+        }
+
+        for(Activity a : sortedActivities) {
+            //System.out.println(a.getName() + " | " + a.getAmount());
+        }
+        //Calculate weights multiplication date last click and name
+        for(Activity a : sortedActivities) {
+            for (Map.Entry<Integer, Map<String, Date>> en : last.entrySet()) {
+                if(id != en.getKey()) break;
+                //System.out.println(en.getKey());
+                int c = 1;
+                for (Map.Entry<String, Date> en1 : en.getValue().entrySet()) {
+                    //System.out.println(en1.getKey() + " } " + en1.getValue().getTime());
+                    if (en1.getKey().toLowerCase().equals(a.getName().toLowerCase())) {
+                        double k = en1.getValue().getTime()/100000000;
+                        a.setAmount(a.getAmount()*Integer.valueOf((int) k)*c);
+                    }
+                    c++;
+                }
+            }
+        }
+
+        sortedActivities = sortedActivities.stream()
+                .sorted(Comparator.comparing(Activity::getAmount).reversed())
+                .collect(Collectors.toList());
+
+        //System.out.println("Koncowe wagi:");
+        //sortedActivities.forEach(System.out::println);
+
         String mostCommon = sortedActivities.get(0).getName();
         sortedActivities.remove(0);
-        System.out.println(mostCommon);
+        //System.out.println(mostCommon);
         List<Proposition> sortedByAlgorithm = new ArrayList<>();
         for(Proposition p : li) {
             if(p.getCategory().equals(one)) sortedByAlgorithm.add(p);

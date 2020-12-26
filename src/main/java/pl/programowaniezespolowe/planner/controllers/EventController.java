@@ -16,10 +16,8 @@ import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
 @RestController
 public class EventController {
@@ -30,6 +28,11 @@ public class EventController {
     @Autowired
     ActivityRepository activityRepository;
 
+    static Map<Integer, Map<String, Date>> lastActivities = new HashMap<Integer, Map<String, Date>>();
+
+    public static Map<Integer, Map<String, Date>> getLastActivities() {
+        return lastActivities;
+    }
 
     @CrossOrigin
     @GetMapping(path = "/events")
@@ -71,11 +74,33 @@ public class EventController {
         List<Activity> activities = activityRepository.findAll();
 
         Activity updateActivity;
+        int id = 1;
 
         for(Activity a : activities) {
             if(a.getName().toLowerCase().equals(event.getCategory())) {
                 updateActivity = a;
-                updateActivity.setAmount(updateActivity.getAmount()+1);
+                updateActivity.setAmount(updateActivity.getAmount() + 1);
+
+                //Last events user
+                boolean isInside = false;
+                for(Map.Entry<Integer, Map<String, Date>> en : lastActivities.entrySet()) {
+                    if(en.getKey().equals(id)) {
+                        isInside = true;
+                    }
+                }
+
+                if(!isInside) {
+                    lastActivities.put(id, new HashMap<String, Date>());
+                }
+
+                for(Map.Entry<Integer, Map<String, Date>> en : lastActivities.entrySet()) {
+                    if(en.getKey().equals(id)) {
+                        Map<String, Date> li = en.getValue();
+                        li.put(a.getName(), Calendar.getInstance().getTime());
+                        if(li.size() > 3) li.remove(0);
+                    }
+                }
+
                 activityRepository.save(updateActivity);
             }
         }
