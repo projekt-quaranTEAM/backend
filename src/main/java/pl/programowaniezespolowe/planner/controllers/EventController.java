@@ -94,7 +94,7 @@ public class EventController {
         System.out.println(event);
         boolean canReturn = checkIsUserLogged(userid);
 
-        if(canReturn) eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
+        if(canReturn) eventRepository.save(new Event(Integer.valueOf(userid), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
