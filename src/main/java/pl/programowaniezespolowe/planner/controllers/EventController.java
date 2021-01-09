@@ -13,6 +13,8 @@ import pl.programowaniezespolowe.planner.event.Event;
 import pl.programowaniezespolowe.planner.event.EventRepository;
 import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
+import pl.programowaniezespolowe.planner.user.User;
+import pl.programowaniezespolowe.planner.user.UserRepository;
 
 
 import java.time.Instant;
@@ -21,6 +23,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 @RestController
 public class EventController {
+
+    @Autowired
+    UserRepository userRepository;
 
     @Autowired
     EventRepository eventRepository;
@@ -34,84 +39,115 @@ public class EventController {
         return lastActivities;
     }
 
+    public boolean checkIsUserLogged(String userid) {
+        List<User> users = userRepository.findAll();
+        for(User u : users) {
+            if(u.getId() == Integer.valueOf(userid)) {
+                if (u.isLogged()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+
     @CrossOrigin
-    @GetMapping(path = "/events")
-    public List<EventDto> getEvents() {
+    @GetMapping(path = "/{userid}/events")
+    public List<EventDto> getEvents(@PathVariable String userid) {
         List<Event> events = eventRepository.findAll();
+
+        boolean canReturn = checkIsUserLogged(userid);
+
         ArrayList<EventDto> mapedEvents = new ArrayList<>();
         for (Event event : events) {
             if(event.getStart() != null)
-            mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId(), event.getLink(), ""));
-        }
+            {
+                if(event.getUserID().toString().equals(userid)) {
+                    mapedEvents.add(new EventDto(new CalendarEventDto(event.getId(), event.getTitle(), Instant.ofEpochMilli(event.getStart().getTime()), Instant.ofEpochMilli(event.getEnd().getTime())), event.getUserID(),event.getId(), event.getLink(), ""));
 
-        return mapedEvents;
-    }
-
-
-    @CrossOrigin
-    @GetMapping(path = "/event/{id}")
-    public Optional<Event> getEvent(@PathVariable String id) {
-        int eventId = Integer.parseInt(id);
-        return eventRepository.findById(eventId);
-    }
-
-    @CrossOrigin
-    @PostMapping("/event/proposition")
-    public ResponseEntity<?> saveProposition(@RequestBody PropositionDto event) {
-        System.out.println(event);
-
-        eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
-
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    @CrossOrigin
-    @PostMapping("/event")
-    public ResponseEntity<?> createEvent(@RequestBody EventDto event) {
-        System.out.println(event);
-        System.out.println(event.getCategory());
-
-        List<Activity> activities = activityRepository.findAll();
-
-        Activity updateActivity;
-        int id = 1;
-
-        for(Activity a : activities) {
-            if(a.getName().toLowerCase().equals(event.getCategory())) {
-                updateActivity = a;
-                updateActivity.setAmount(updateActivity.getAmount() + 1);
-
-                //Last events user
-                boolean isInside = false;
-                for(Map.Entry<Integer, Map<String, Date>> en : lastActivities.entrySet()) {
-                    if(en.getKey().equals(id)) {
-                        isInside = true;
-                    }
                 }
-
-                if(!isInside) {
-                    lastActivities.put(id, new HashMap<String, Date>());
-                }
-
-                for(Map.Entry<Integer, Map<String, Date>> en : lastActivities.entrySet()) {
-                    if(en.getKey().equals(id)) {
-                        Map<String, Date> li = en.getValue();
-                        li.put(a.getName(), Calendar.getInstance().getTime());
-                        if(li.size() > 3) li.remove(0);
-                    }
-                }
-
-                activityRepository.save(updateActivity);
             }
         }
+        if(canReturn) {
+            return mapedEvents;
+        }
+        return null;
+    }
 
-        eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd()), event.getLink()));
+
+    @CrossOrigin
+    @GetMapping(path = "/{userid}/event/{id}")
+    public Optional<Event> getEvent(@PathVariable String userid, @PathVariable String id) {
+
+        boolean canReturn = checkIsUserLogged(userid);
+
+        int eventId = Integer.parseInt(id);
+        if(canReturn) return eventRepository.findById(eventId);
+        else return null;
+    }
+
+    @CrossOrigin
+    @PostMapping("/{userid}/event/proposition")
+    public ResponseEntity<?> saveProposition(@PathVariable String userid, @RequestBody PropositionDto event) {
+        System.out.println(event);
+        boolean canReturn = checkIsUserLogged(userid);
+
+        if(canReturn) eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd())));
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @CrossOrigin
-    @PutMapping("/event/{eventId}")
+    @PostMapping("/{userid}/event")
+    public ResponseEntity<?> createEvent(@PathVariable String userid, @RequestBody EventDto event) {
+        System.out.println(event);
+        System.out.println(event.getCategory());
+        boolean canReturn = checkIsUserLogged(userid);
+
+        if(canReturn) {
+            List<Activity> activities = activityRepository.findAll();
+
+            Activity updateActivity;
+            //int id = 1;
+
+            for (Activity a : activities) {
+                if (a.getName().toLowerCase().equals(event.getCategory())) {
+                    updateActivity = a;
+                    updateActivity.setAmount(updateActivity.getAmount() + 1);
+
+                    //Last events user
+                    boolean isInside = false;
+                    for (Map.Entry<Integer, Map<String, Date>> en : lastActivities.entrySet()) {
+                        if (en.getKey().equals(userid)) {
+                            isInside = true;
+                        }
+                    }
+
+                    if (!isInside) {
+                        lastActivities.put(Integer.valueOf(userid), new HashMap<String, Date>());
+                    }
+
+                    for (Map.Entry<Integer, Map<String, Date>> en : lastActivities.entrySet()) {
+                        if (en.getKey().equals(userid)) {
+                            Map<String, Date> li = en.getValue();
+                            li.put(a.getName(), Calendar.getInstance().getTime());
+                            if (li.size() > 3) li.remove(0);
+                        }
+                    }
+
+                    activityRepository.save(updateActivity);
+                }
+            }
+
+            eventRepository.save(new Event(event.getUserID(), event.getCalendarEvent().getTitle(), Date.from(event.getCalendarEvent().getStart()), Date.from(event.getCalendarEvent().getEnd()), event.getLink()));
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @CrossOrigin
+    @PutMapping("/{userid}/event/{eventId}")
     public ResponseEntity<?> updateEvent(@RequestBody EventDto event, @PathVariable Integer eventId) {
 
         Optional<Event> updateEvent = eventRepository.findById(eventId);
@@ -133,11 +169,26 @@ public class EventController {
     }
 
     @CrossOrigin
-    @DeleteMapping("event/{id}")
-    public List<Event> deleteEvent(@PathVariable String id) {
+    @DeleteMapping("/{userid}/event/{id}")
+    public List<Event> deleteEvent(@PathVariable String userid, @PathVariable String id) {
         int eventId = Integer.parseInt(id);
+        boolean canReturn = checkIsUserLogged(userid);
+        List<Event> events = eventRepository.findAll();
+
         eventRepository.deleteById(eventId);
-        return eventRepository.findAll();
+        ArrayList<Event> mapedEvents = new ArrayList<>();
+        for (Event event : events) {
+            if(event.getStart() != null)
+            {
+                if(event.getUserID().toString().equals(userid)) {
+                    mapedEvents.add(event);
+                }
+            }
+        }
+        if(canReturn) {
+            return mapedEvents;
+        }
+        return null;
     }
 
 

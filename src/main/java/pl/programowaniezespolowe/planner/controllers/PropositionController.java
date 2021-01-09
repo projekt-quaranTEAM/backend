@@ -14,6 +14,8 @@ import pl.programowaniezespolowe.planner.event.EventRepository;
 import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
+import pl.programowaniezespolowe.planner.user.User;
+import pl.programowaniezespolowe.planner.user.UserRepository;
 
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -34,11 +36,27 @@ public class PropositionController {
     @Autowired
     EventRepository eventRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
+    public boolean checkIsUserLogged(String userid) {
+        List<User> users = userRepository.findAll();
+        for(User u : users) {
+            if(u.getId() == Integer.valueOf(userid)) {
+                if (u.isLogged()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
 
     @CrossOrigin
-    @GetMapping("/proposition")
-    public List<PropositionDto> getPropositions() {
-        List<Proposition> propositions = getThreeCategoriesAlgorithm(1);
+    @GetMapping("/{userid}/proposition")
+    public List<PropositionDto> getPropositions(@PathVariable String userid) {
+        List<Proposition> propositions = getThreeCategoriesAlgorithm(Integer.valueOf(userid));
         ArrayList<PropositionDto> mapedEvents = new ArrayList<>();
         for (Proposition proposition : propositions) {
             if(proposition.getStartdate() != null)
