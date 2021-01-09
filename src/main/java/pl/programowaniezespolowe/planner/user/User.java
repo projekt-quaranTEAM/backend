@@ -28,6 +28,9 @@ public class User {
     @Column(name = "permission")
     private String permission;
 
+    @Column(name = "logged")
+    private boolean logged;
+
     public User() {
     }
 
@@ -48,6 +51,16 @@ public class User {
         this.email = email;
         this.password = password;
         this.permission = permission;
+    }
+
+    public User(String name, String surname, int groupid, String email, String password, String permission, boolean logged) {
+        this.name = name;
+        this.surname = surname;
+        this.groupid = groupid;
+        this.email = email;
+        this.password = password;
+        this.permission = permission;
+        this.logged = logged;
     }
 
     public int getId() {
@@ -104,5 +117,13 @@ public class User {
 
     public void setPermission(String permission) {
         this.permission = permission;
+    }
+
+    public boolean isLogged() {
+        return logged;
+    }
+
+    public void setLogged(boolean logged) {
+        this.logged = logged;
     }
 }
