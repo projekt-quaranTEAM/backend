@@ -14,6 +14,8 @@ import pl.programowaniezespolowe.planner.event.EventRepository;
 import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 import pl.programowaniezespolowe.planner.user.User;
+import pl.programowaniezespolowe.planner.user.UserLastActivities;
+import pl.programowaniezespolowe.planner.user.UserLastDateActivity;
 import pl.programowaniezespolowe.planner.user.UserRepository;
 
 
@@ -34,6 +36,9 @@ public class EventController {
     ActivityRepository activityRepository;
 
     static Map<Integer, Map<String, Date>> lastActivities = new HashMap<Integer, Map<String, Date>>();
+
+    static List<UserLastActivities> lastUsersActivities = new ArrayList<>();
+    static List<UserLastDateActivity> userLastDateActivities = new ArrayList<>();
 
     public static Map<Integer, Map<String, Date>> getLastActivities() {
         return lastActivities;
@@ -107,13 +112,70 @@ public class EventController {
         boolean canReturn = checkIsUserLogged(userid);
 
         if(canReturn) {
+            System.out.println("Wszedlem w zapisywanie");
             List<Activity> activities = activityRepository.findAll();
 
             Activity updateActivity;
             //int id = 1;
 
+            boolean find = false;
+            boolean findDate = false;
+            String ac = "";
+
+            for(Activity a : activities) {
+                if (a.getName().toLowerCase().equals(event.getCategory()) && a.getUserid() == Integer.valueOf(userid)) {
+                    for (UserLastDateActivity us2 : userLastDateActivities) {
+                        if (us2.userId == Integer.valueOf(userid)) {
+                            us2.lastActivityDate = new Date();
+                            us2.name = a.getName();
+                            findDate = true;
+                        }
+                    }
+                }
+            }
+
+            for(Activity a : activities) {
+                if(a.getName().toLowerCase().equals(event.getCategory()) && a.getUserid() == Integer.valueOf(userid)) {
+                    if(!findDate) {
+                        UserLastDateActivity dt = new UserLastDateActivity();
+                        dt.userId = Integer.valueOf(userid);
+                        dt.name = a.getName();
+                        dt.lastActivityDate = new Date();
+                        userLastDateActivities.add(dt);
+                    }
+                }
+            }
+
+
+            for(Activity a : activities) {
+                if(a.getName().toLowerCase().equals(event.getCategory()) && a.getUserid() == Integer.valueOf(userid)) {
+                    for(UserLastActivities us : lastUsersActivities) {
+                        if(us.userId == Integer.valueOf(userid)) {
+                            System.out.println("Dodalem ostatnia aktywnosc");
+                            find = true;
+                            ac = a.getName();
+                            us.activities.add(ac);
+                        }
+                    }
+                }
+            }
+            for(Activity a : activities) {
+                if(a.getName().toLowerCase().equals(event.getCategory()) && a.getUserid() == Integer.valueOf(userid)) {
+                    if (!find) {
+                        System.out.println("Dodalem ostatnia aktywnosc");
+                        UserLastActivities us1 = new UserLastActivities();
+                        us1.userId = Integer.valueOf(userid);
+                        us1.activities.add(a.getName());
+                        lastUsersActivities.add(us1);
+                    }
+                }
+            }
+
+
+
+
             for (Activity a : activities) {
-                if (a.getName().toLowerCase().equals(event.getCategory())) {
+                if (a.getName().toLowerCase().equals(event.getCategory()) && a.getUserid() == Integer.valueOf(userid)) {
                     updateActivity = a;
                     updateActivity.setAmount(updateActivity.getAmount() + 1);
 

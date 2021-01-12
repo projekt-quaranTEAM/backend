@@ -7,6 +7,7 @@ import pl.programowaniezespolowe.planner.activity.ActivityRepository;
 import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
 import pl.programowaniezespolowe.planner.user.User;
+import pl.programowaniezespolowe.planner.user.UserRepository;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -20,6 +21,9 @@ public class ActivityController {
     @Autowired
     ActivityRepository activityRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
     //Get activities by recent usage
     @GetMapping(path = "/activity")
     public List<Activity> getAllActivities() {
@@ -27,12 +31,13 @@ public class ActivityController {
     }
 
     //Increase counter after user add to planner
-    @PutMapping(path = "/activityUpdate/{name}")
-    public List<Activity> increaseAmount(@PathVariable String name) {
+    @PutMapping(path = "/activityUpdate/{userid}/{name}")
+    public List<Activity> increaseAmount(@PathVariable String userid, @PathVariable String name) {
+
 
         List<Activity> activities = activityRepository.findAll();
         for(Activity a : activities) {
-            if(a.getName().equals(name)) {
+            if(a.getName().equals(name) && a.getUserid() == Integer.valueOf(userid)) {
 
                 Activity activity = a;
 

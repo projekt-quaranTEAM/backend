@@ -15,6 +15,8 @@ import pl.programowaniezespolowe.planner.proposition.Proposition;
 import pl.programowaniezespolowe.planner.proposition.PropositionRepository;
 import pl.programowaniezespolowe.planner.proposition.PropositionUrl;
 import pl.programowaniezespolowe.planner.user.User;
+import pl.programowaniezespolowe.planner.user.UserLastActivities;
+import pl.programowaniezespolowe.planner.user.UserLastDateActivity;
 import pl.programowaniezespolowe.planner.user.UserRepository;
 
 import java.text.SimpleDateFormat;
@@ -38,6 +40,8 @@ public class PropositionController {
 
     @Autowired
     UserRepository userRepository;
+
+
 
     public boolean checkIsUserLogged(String userid) {
         List<User> users = userRepository.findAll();
@@ -67,9 +71,27 @@ public class PropositionController {
     }
 
     //Algorithm
-    public List<Proposition> getThreeCategoriesAlgorithm(int id) {
+    public List<Proposition> getThreeCategoriesAlgorithm(int userid) {
         List<Proposition> li = propositionRepository.findAll();
-        List<Activity> ac = activityRepository.findAll();
+        List<Activity> ac1 = activityRepository.findAll();
+        List<Activity> ac2 = new ArrayList<>();
+
+        System.out.println("Start activity last:");
+        EventController.lastUsersActivities.forEach(System.out::println);
+
+        System.out.println("Start activity date:");
+        EventController.userLastDateActivities.forEach(System.out::println);
+
+        //Get user activities count (2)
+        for(Activity a : ac1) {
+            if(a.getUserid() == Integer.valueOf(userid)) {
+                ac2.add(a);
+            }
+        }
+        List<Activity> ac = ac2;
+
+
+        //Get all eveents added count (1)
         List<Event> ev = eventRepository.findAll();
 
         List<Activity> sortedActivities = ac.stream()
@@ -96,6 +118,8 @@ public class PropositionController {
                 }
             }
         }
+
+        //Get date last event
         //System.out.println(weights.toString());
         Map<Integer, Map<String, Date>> last = getLastActivities();
         //System.out.println("Mapka:");
@@ -108,17 +132,10 @@ public class PropositionController {
 
         List<String> pros = new ArrayList<>();
 
-        String one = "sport";
+        String one = "meeting";
         String two = "games";
         String three = "music";
 
-        int oneInitialC = 3;
-        int twoInitialC = 2;
-        int threeInitialC = 1;
-
-        int oneLastC = 1;
-        int twoLastC = 2;
-        int threeLastC = 3;
 
         //Calculate weights sum
         //System.out.println("Calculating");
@@ -127,39 +144,74 @@ public class PropositionController {
                 if(en.getKey().equals(a.getName())) a.setAmount(en.getValue());
             }
         }
-        //Calculate weights divide initial survey
-        for(Activity a : sortedActivities) {
-            if(a.getName().toLowerCase().equals(one)) a.setAmount(a.getAmount() / oneInitialC);
-            if(a.getName().toLowerCase().equals(two)) a.setAmount(a.getAmount() / twoInitialC);
-            if(a.getName().toLowerCase().equals(three)) a.setAmount(a.getAmount() / threeInitialC);
+
+        System.out.println("Wagi startowe");
+        for(Map.Entry<String, Integer> en : weights.entrySet()) {
+            System.out.println(en.getKey() + " : " + en.getValue());
         }
+
+//        Waga = ((1 + 2) / 3) * (4 / 5)
+//
+//        Edytuj - Usuń
+//        Magdalena Karpacka 16 gru 2020 o 18:13
+//                -ile uzytkownik ma wydarzen danej kategorii w kalendarzu
+//                -licznik kliknięć
+//                -trzy ostatnie kliknięcia kolejno 1,2,3
+//                -data ostatniego klikniecia danej kategorii
 
         for(Activity a : sortedActivities) {
             //System.out.println(a.getName() + " | " + a.getAmount());
         }
-        //Calculate weights multiplication date last click and name
-        for(Activity a : sortedActivities) {
-            for (Map.Entry<Integer, Map<String, Date>> en : last.entrySet()) {
-                if(id != en.getKey()) break;
-                //System.out.println(en.getKey());
-                int c = 1;
-                for (Map.Entry<String, Date> en1 : en.getValue().entrySet()) {
-                    //System.out.println(en1.getKey() + " } " + en1.getValue().getTime());
-                    if (en1.getKey().toLowerCase().equals(a.getName().toLowerCase())) {
-                        double k = en1.getValue().getTime()/100000000;
-                        a.setAmount(a.getAmount()*Integer.valueOf((int) k)*c);
+
+
+        for(UserLastDateActivity us : EventController.userLastDateActivities) {
+            for(Activity a : sortedActivities) {
+                for(Map.Entry<String, Integer> en : weights.entrySet()) {
+                    if(en.getKey().equals(a.getName()) && a.getName().equals(us.name)) {
+                        en.setValue(en.getValue() + (int)(us.lastActivityDate.getTime()/100000000) /1000);
                     }
-                    c++;
                 }
             }
         }
 
+        System.out.println("Wagi po dacie:");
+        for(Map.Entry<String, Integer> en : weights.entrySet()) {
+            System.out.println(en.getKey() + " : " + en.getValue());
+        }
+
+        for(UserLastActivities us1 : EventController.lastUsersActivities) {
+            for(Activity a : sortedActivities) {
+                for(Map.Entry<String, Integer> en : weights.entrySet()) {
+                    if(en.getKey().equals(a.getName()) && us1.userId == Integer.valueOf(userid)) {
+                        for(int i = 0; i < us1.activities.size(); i++) {
+                            if(en.getValue().equals(us1.activities.get(i))) en.setValue(en.getValue() + i);
+                            if(i >= 3) break;
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("Wagi po ostatnich aktywnosciach:");
+        for(Map.Entry<String, Integer> en : weights.entrySet()) {
+            System.out.println(en.getKey() + " : " + en.getValue());
+        }
+
+        //Przepisanie koncowych wag
+        for(Map.Entry<String, Integer> en : weights.entrySet()) {
+            for(Activity a : sortedActivities) {
+                if(a.getName().equals(en.getKey())) {
+                    a.setAmount(en.getValue());
+                }
+            }
+        }
+
+        System.out.println("Koncowe wagi posortowane:");
         sortedActivities = sortedActivities.stream()
                 .sorted(Comparator.comparing(Activity::getAmount).reversed())
                 .collect(Collectors.toList());
 
-        //System.out.println("Koncowe wagi:");
-        //sortedActivities.forEach(System.out::println);
+        sortedActivities.forEach(System.out::println);
 
         String mostCommon = sortedActivities.get(0).getName();
         sortedActivities.remove(0);
@@ -199,33 +251,94 @@ public class PropositionController {
     }
 
     @CrossOrigin
-    @GetMapping(path = "/proposition/update/{name}")
-    public List<Proposition> getPropositionsFromWeb(@PathVariable String name) {
+    @GetMapping(path = "/proposition/update")
+    public List<Proposition> getPropositionsFromWeb() {
+
+        List<String> categories = new ArrayList<>();
+        categories.add("sport");
+        categories.add("meeting");
+        categories.add("movies");
+        categories.add("cooking");
+        categories.add("music");
+        categories.add("games");
+        categories.add("books");
+        categories.add("art");
+        categories.add("technology");
+        categories.add("housework");
+        categories.add("community");
+        categories.add("business");
+        categories.add("health");
+        categories.add("science");
+        categories.add("travel");
+        categories.add("charity");
+        categories.add("spirituality");
+        categories.add("family");
+        categories.add("education");
+        categories.add("holiday");
+        categories.add("fashion");
+        categories.add("auto");
+
+        //List<String> li = Arrays.asList("Sport" ,"Meeting","Movies","Cooking","Music","Games","Books","Art","Technology","Housework","Community","Business","Health","Science","Travel","Charity","Spirituality","Family","Education","Holiday","Fashion", "Auto");
+
+
 
         PropositionUrl propositionUrl = null;
-        if(name.equals("cook")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 4, "cooking");
-        else if(name.equals("sport")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 1, "sport");
-        else if(name.equals("music")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 5, "music");
-        else if(name.equals("movies")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 3, "cooking");
-        else if(name.equals("games")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 6, "games");
-        else if(name.equals("meeting")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 2, "meeting");
+        for(int i = 0; i < categories.size(); i++) {
+            try {
 
-        List<Proposition> pr = propositionUrl.getLi();
-//        for(Proposition p : pr) {
-//            System.out.println(p.getName() + " | " +  p.getStartdate());
-//        }
-        Proposition test = pr.get(0);
+                propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + categories.get(i) + "/", i + 1, categories.get(i));
 
-        List<Proposition> databaseProposition = propositionRepository.findAll();
+                List<Proposition> pr = propositionUrl.getLi();
+                for (Proposition p : pr) {
+                    //System.out.println(p.getName() + " | " + p.getStartdate());
+                }
+                //Proposition test = pr.get(0);
 
-        boolean status = false;
-        for(Proposition px1 : pr) {
-            for (Proposition px : databaseProposition) {
-                if (px.getName().equals(px1.getName())) status = true;
+                List<Proposition> databaseProposition = propositionRepository.findAll();
+
+                boolean status = false;
+                for (Proposition px1 : pr) {
+                    for (Proposition px : databaseProposition) {
+                        if (px.getName().equals(px1.getName())) status = true;
+                    }
+                    if (!status) propositionRepository.save(px1);
+                    status = false;
+                }
             }
-            if (!status) propositionRepository.save(px1);
-            status = false;
+            catch (Exception e) {
+                System.out.println("Nie ma takiej kategorii: " + categories.get(i));
+            }
+
         }
+
+
+//        if(name.equals("cooking")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 4, "cooking");
+//        else if(name.equals("sport")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 1, "sport");
+//        else if(name.equals("music")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 5, "music");
+//        else if(name.equals("movies")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 3, "movies");
+//        else if(name.equals("games")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 6, "games");
+//        else if(name.equals("meeting")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 2, "meeting");
+//        else if(name.equals("books")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 7, "books");
+//        else if(name.equals("art")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 8, "art");
+//        else if(name.equals("technology")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 9, "technology");
+//        else if(name.equals("housework")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 10, "housework");
+//        else if(name.equals("community")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 11, "community");
+//        else if(name.equals("business")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 12, "business");
+//        else if(name.equals("health")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 13, "health");
+//        else if(name.equals("science")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 14, "science");
+//        else if(name.equals("travel")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 15, "travel");
+//        else if(name.equals("charity")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 16, "charity");
+//        else if(name.equals("spirituality")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 17, "spirituality");
+//        else if(name.equals("family")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 18, "family");
+//        else if(name.equals("education")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 19, "education");
+//        else if(name.equals("holiday")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 20, "holiday");
+//        else if(name.equals("fashion")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 21, "fashion");
+//        else if(name.equals("auto")) propositionUrl = new PropositionUrl("https://www.eventbrite.com/d/online/" + name + "/", 22, "auto");
+
+
+
+
+
 
         return propositionRepository.findAll();
     }
