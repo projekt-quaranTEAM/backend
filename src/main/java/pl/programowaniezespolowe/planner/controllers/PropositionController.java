@@ -90,6 +90,8 @@ public class PropositionController {
         }
         List<Activity> ac = ac2;
 
+        //ac.forEach(System.out::println);
+
 
         //Get all eveents added count (1)
         List<Event> ev = eventRepository.findAll();
@@ -104,20 +106,30 @@ public class PropositionController {
         {
             weights.put(a.getName(), a.getAmount());
         }
-        //System.out.println(weights.toString());
+        System.out.println("Wagi danego uzytkonika start");
+        System.out.println(weights.toString());
+
+
+        //Get all user events
         for(Event e : ev) {
             if(e.getLink() != null) {
                 for(Proposition p : li) {
                     if(p.getName().equals(e.getTitle())) {
-                        for(Map.Entry<String, Integer> en : weights.entrySet()) {
-                            if(en.getKey().toLowerCase().equals(p.getCategory())) {
-                                en.setValue(en.getValue() + 1);
+                        if(e.getUserID().equals(userid)) {
+                            for(Map.Entry<String, Integer> en : weights.entrySet()) {
+                                if (en.getKey().toLowerCase().equals(p.getCategory())) {
+                                    en.setValue(en.getValue() + 1);
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
+        System.out.println("Wagi danego uzytkonika z suma jego eventow");
+        System.out.println(weights.toString());
+
 
         //Get date last event
         //System.out.println(weights.toString());
